@@ -1,0 +1,38 @@
+@layer theme {
+  @theme {
+    /* Colors - Primary */
+    --color-lingua-purple: #6c4ef5;
+    --color-lingua-deep-purple: #5b3bf6;
+    --color-lingua-blue: #4d8bff;
+    --color-lingua-green: #21c16b;
+
+    /* Colors - Semantic */
+    --color-success: #21c16b;
+    --color-warning: #ffc800;
+    --color-streak: #ff8a00;
+    --color-error: #ff4d4f;
+    --color-info: #4d8bff;
+
+    /* Colors - Neutrals */
+    --color-text-primary: #0d132b;
+    --color-text-secondary: #6b7280;
+    --color-border: #e5e7eb;
+    --color-surface: #f6f7fb;
+    --color-background: #ffffff;
+
+    /* Fonts */
+    --font-poppins: "Poppins", sans-serif;
+    --font-poppins-bold: "Poppins-Bold", sans-serif;
+    --font-poppins-semibold: "Poppins-SemiBold", sans-serif;
+    --font-poppins-medium: "Poppins-Medium", sans-serif;
+    --font-poppins-regular: "Poppins-Regular", sans-serif;
+
+    /* Spacing / Sizes from design if any, but we'll stick to defaults and add utilities for text sizes */
+  }
+}
+
+@layer base {
+  :root {
+    --font-sans: "Poppins-Regular", system-ui, sans-serif;
+  }
+}
