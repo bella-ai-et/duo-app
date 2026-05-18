@@ -1,14 +1,22 @@
 import { Pressable, ScrollView, Text, View } from "@/components/tw";
 import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
+import { useAuth } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import React from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function OnboardingScreen() {
   const router = useRouter();
+  const { isSignedIn, isLoaded } = useAuth();
+
+  if (!isLoaded) return null;
+
+  if (isSignedIn) {
+    return <Redirect href="/" />;
+  }
 
   const handleGetStarted = () => {
     router.push("/sign-up");
