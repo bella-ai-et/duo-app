@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView } from "@/components/tw";
+import { Pressable, ScrollView, Text, View } from "@/components/tw";
 import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
 import { Ionicons } from "@expo/vector-icons";
@@ -11,9 +11,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
 
   const handleGetStarted = () => {
-    // For now, let's just go back or to the next screen if it exists
-    // The prompt doesn't specify where "Get Started" goes yet.
-    // router.push("/(auth)/sign-up");
+    router.push("/sign-up");
   };
 
   return (
