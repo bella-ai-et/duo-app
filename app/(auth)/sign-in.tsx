@@ -1,20 +1,83 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "@/components/tw";
 import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
+import { useSignIn, useSSO } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
+import { useRouter, type Href } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, SafeAreaView } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import React, { useCallback, useState } from "react";
+import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView } from "react-native";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignInScreen() {
   const router = useRouter();
+  const { signIn, errors, fetchStatus } = useSignIn();
+  const { startSSOFlow } = useSSO();
+  
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [code, setCode] = useState("");
 
-  const handleSignIn = () => {
-    setShowVerification(true);
+  const handleSignIn = async () => {
+    const { error } = await signIn.password({
+      emailAddress: email,
+      password,
+    });
+
+    if (error) {
+      console.error(JSON.stringify(error, null, 2));
+      Alert.alert("Sign In Error", error.message || "Something went wrong");
+      return;
+    }
+
+    if (signIn.status === 'complete') {
+      await signIn.finalize({
+        navigate: ({ decorateUrl }) => {
+          const url = decorateUrl('/')
+          router.push(url as Href)
+        },
+      })
+    } else if (signIn.status === 'needs_second_factor' || signIn.status === 'needs_client_trust') {
+      await signIn.mfa.sendEmailCode();
+      setShowVerification(true);
+    }
+  };
+
+  const onSocialPress = useCallback(async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
+    try {
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: Linking.createURL("/", { scheme: "duo54" }),
+      });
+
+      if (createdSessionId) {
+        await setActive!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err: any) {
+      console.error("OAuth error", err);
+      Alert.alert("Authentication Error", err.errors?.[0]?.message || "Failed to sign in with social provider.");
+    }
+  }, [startSSOFlow]);
+
+  const handleVerify = async () => {
+    await signIn.mfa.verifyEmailCode({ code });
+
+    if (signIn.status === 'complete') {
+      await signIn.finalize({
+        navigate: ({ decorateUrl }) => {
+          const url = decorateUrl('/')
+          router.push(url as Href)
+        },
+      })
+    } else {
+      Alert.alert("Verification Error", "Sign-in attempt not complete");
+    }
   };
 
   const handleCodeChange = (text: string) => {
@@ -22,10 +85,7 @@ export default function SignInScreen() {
     if (cleaned.length <= 6) {
       setCode(cleaned);
       if (cleaned.length === 6) {
-        setTimeout(() => {
-          setShowVerification(false);
-          router.replace("/");
-        }, 500);
+        handleVerify();
       }
     }
   };
@@ -83,19 +143,43 @@ export default function SignInScreen() {
                 />
               </View>
             </View>
+
+            <View>
+              <Text className="text-caption mb-1 ml-1">Password</Text>
+              <View className="h-[64px] bg-white border border-border rounded-2xl px-4 flex-row items-center">
+                <TextInput
+                  placeholder="••••••••"
+                  placeholderTextColor="#6b7280"
+                  className="flex-1 text-body-large"
+                  value={password}
+                  onChangeText={setPassword}
+                  secureTextEntry={!showPassword}
+                />
+                <Pressable onPress={() => setShowPassword(!showPassword)}>
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={24}
+                    color="#6b7280"
+                  />
+                </Pressable>
+              </View>
+            </View>
           </View>
 
           {/* Sign In Button */}
           <Pressable
             onPress={handleSignIn}
-            className="bg-lingua-purple h-[64px] rounded-2xl items-center justify-center mt-8"
+            disabled={fetchStatus === 'fetching' || !email || !password}
+            className={`bg-lingua-purple h-[64px] rounded-2xl items-center justify-center mt-8 ${
+              fetchStatus === 'fetching' || !email || !password ? "opacity-50" : ""
+            }`}
             style={({ pressed }) => ({
-              opacity: pressed ? 0.9 : 1,
+              opacity: pressed ? 0.9 : (fetchStatus === 'fetching' || !email || !password ? 0.5 : 1),
               transform: [{ scale: pressed ? 0.98 : 1 }],
             })}
           >
             <Text className="text-white text-lg font-poppins-semibold">
-              Sign In
+              {fetchStatus === 'fetching' ? "Logging in..." : "Sign In"}
             </Text>
           </Pressable>
 
@@ -112,19 +196,19 @@ export default function SignInScreen() {
               icon="logo-google"
               label="Continue with Google"
               color="#EA4335"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_google")}
             />
             <SocialButton
               icon="logo-facebook"
               label="Continue with Facebook"
               color="#1877F2"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_facebook")}
             />
             <SocialButton
               icon="logo-apple"
               label="Continue with Apple"
               color="#000000"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_apple")}
             />
           </View>
 
@@ -184,7 +268,10 @@ export default function SignInScreen() {
             />
 
             <Pressable
-              onPress={() => setShowVerification(false)}
+              onPress={() => {
+                setShowVerification(false);
+                signIn.mfa.sendEmailCode();
+              }}
               className="mt-4"
             >
               <Text className="text-body-medium text-text-secondary">

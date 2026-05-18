@@ -1,22 +1,74 @@
 import { Pressable, ScrollView, Text, TextInput, View } from "@/components/tw";
 import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
+import { useSignUp, useSSO } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState } from "react";
-import { KeyboardAvoidingView, Modal, Platform, SafeAreaView } from "react-native";
+import React, { useState, useCallback } from "react";
+import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView } from "react-native";
+import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { signUp, errors, fetchStatus } = useSignUp();
+  const { startSSOFlow } = useSSO();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [code, setCode] = useState("");
 
-  const handleSignUp = () => {
+  const handleSignUp = async () => {
+    const { error } = await signUp.password({
+      emailAddress: email,
+      password,
+    });
+
+    if (error) {
+      console.error(JSON.stringify(error, null, 2));
+      Alert.alert("Sign Up Error", error.message || "Something went wrong");
+      return;
+    }
+
+    await signUp.verifications.sendEmailCode();
     setShowVerification(true);
+  };
+
+  const onSocialPress = useCallback(async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
+    try {
+      const { createdSessionId, setActive } = await startSSOFlow({
+        strategy,
+        redirectUrl: Linking.createURL("/", { scheme: "duo54" }),
+      });
+
+      if (createdSessionId) {
+        await setActive!({ session: createdSessionId });
+        router.replace("/");
+      }
+    } catch (err: any) {
+      console.error("OAuth error", err);
+      Alert.alert("Authentication Error", err.errors?.[0]?.message || "Failed to sign up with social provider.");
+    }
+  }, [startSSOFlow]);
+
+  const handleVerify = async () => {
+    await signUp.verifications.verifyEmailCode({ code });
+
+    if (signUp.status === 'complete') {
+      await signUp.finalize({
+        navigate: ({ decorateUrl }) => {
+          const url = decorateUrl('/')
+          router.push(url as Href)
+        },
+      })
+    } else {
+      Alert.alert("Verification Error", "Sign-up attempt not complete");
+    }
   };
 
   const handleCodeChange = (text: string) => {
@@ -24,11 +76,7 @@ export default function SignUpScreen() {
     if (cleaned.length <= 6) {
       setCode(cleaned);
       if (cleaned.length === 6) {
-        // Automatically navigate to home when 6 digits are entered
-        setTimeout(() => {
-          setShowVerification(false);
-          router.replace("/");
-        }, 500);
+        handleVerify();
       }
     }
   };
@@ -112,14 +160,17 @@ export default function SignUpScreen() {
           {/* Sign Up Button */}
           <Pressable
             onPress={handleSignUp}
-            className="bg-lingua-purple h-[64px] rounded-2xl items-center justify-center mt-8"
+            disabled={fetchStatus === 'fetching' || !email || !password}
+            className={`bg-lingua-purple h-[64px] rounded-2xl items-center justify-center mt-8 ${
+              fetchStatus === 'fetching' || !email || !password ? "opacity-50" : ""
+            }`}
             style={({ pressed }) => ({
-              opacity: pressed ? 0.9 : 1,
+              opacity: pressed ? 0.9 : (fetchStatus === 'fetching' || !email || !password ? 0.5 : 1),
               transform: [{ scale: pressed ? 0.98 : 1 }],
             })}
           >
             <Text className="text-white text-lg font-poppins-semibold">
-              Sign Up
+              {fetchStatus === 'fetching' ? "Creating account..." : "Sign Up"}
             </Text>
           </Pressable>
 
@@ -136,19 +187,19 @@ export default function SignUpScreen() {
               icon="logo-google"
               label="Continue with Google"
               color="#EA4335"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_google")}
             />
             <SocialButton
               icon="logo-facebook"
               label="Continue with Facebook"
               color="#1877F2"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_facebook")}
             />
             <SocialButton
               icon="logo-apple"
               label="Continue with Apple"
               color="#000000"
-              onPress={() => {}}
+              onPress={() => onSocialPress("oauth_apple")}
             />
           </View>
 
@@ -208,7 +259,10 @@ export default function SignUpScreen() {
             />
 
             <Pressable
-              onPress={() => setShowVerification(false)}
+              onPress={() => {
+                setShowVerification(false);
+                signUp.verifications.sendEmailCode();
+              }}
               className="mt-4"
             >
               <Text className="text-body-medium text-text-secondary">
