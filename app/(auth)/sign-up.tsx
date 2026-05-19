@@ -3,12 +3,13 @@ import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
 import { useSignUp, useSSO } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
+import * as Linking from "expo-linking";
 import { useRouter, type Href } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useState, useCallback } from "react";
-import { Alert, KeyboardAvoidingView, Modal, Platform, SafeAreaView } from "react-native";
 import * as WebBrowser from "expo-web-browser";
-import * as Linking from "expo-linking";
+import React, { useCallback, useState } from "react";
+import { Alert, KeyboardAvoidingView, Modal, Platform } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -22,6 +23,7 @@ export default function SignUpScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showVerification, setShowVerification] = useState(false);
   const [code, setCode] = useState("");
+  const [socialLoading, setSocialLoading] = useState<string | null>(null);
 
   const handleSignUp = async () => {
     const { error } = await signUp.password({
@@ -40,6 +42,9 @@ export default function SignUpScreen() {
   };
 
   const onSocialPress = useCallback(async (strategy: "oauth_google" | "oauth_facebook" | "oauth_apple") => {
+    if (socialLoading) return;
+    
+    setSocialLoading(strategy);
     try {
       const { createdSessionId, setActive } = await startSSOFlow({
         strategy,
@@ -52,9 +57,19 @@ export default function SignUpScreen() {
       }
     } catch (err: any) {
       console.error("OAuth error", err);
-      Alert.alert("Authentication Error", err.errors?.[0]?.message || "Failed to sign up with social provider.");
+      // If the error is about social connections not being enabled, provide a clearer message
+      if (err.errors?.[0]?.code === "strategy_not_enabled") {
+        Alert.alert(
+          "Connection Not Enabled", 
+          `The ${strategy.replace('oauth_', '')} connection is not enabled in your Clerk Dashboard. Please enable it under User & Authentication > Social Connections.`
+        );
+      } else {
+        Alert.alert("Authentication Error", err.errors?.[0]?.message || "Failed to sign up with social provider.");
+      }
+    } finally {
+      setSocialLoading(null);
     }
-  }, [startSSOFlow]);
+  }, [startSSOFlow, socialLoading]);
 
   const handleVerify = async () => {
     await signUp.verifications.verifyEmailCode({ code });
@@ -185,20 +200,23 @@ export default function SignUpScreen() {
           <View className="gap-4">
             <SocialButton
               icon="logo-google"
-              label="Continue with Google"
+              label={socialLoading === "oauth_google" ? "Connecting..." : "Continue with Google"}
               color="#EA4335"
+              disabled={!!socialLoading}
               onPress={() => onSocialPress("oauth_google")}
             />
             <SocialButton
               icon="logo-facebook"
-              label="Continue with Facebook"
+              label={socialLoading === "oauth_facebook" ? "Connecting..." : "Continue with Facebook"}
               color="#1877F2"
+              disabled={!!socialLoading}
               onPress={() => onSocialPress("oauth_facebook")}
             />
             <SocialButton
               icon="logo-apple"
-              label="Continue with Apple"
+              label={socialLoading === "oauth_apple" ? "Connecting..." : "Continue with Apple"}
               color="#000000"
+              disabled={!!socialLoading}
               onPress={() => onSocialPress("oauth_apple")}
             />
           </View>
@@ -281,16 +299,21 @@ function SocialButton({
   label,
   onPress,
   color,
+  disabled,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   onPress: () => void;
   color: string;
+  disabled?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      className="h-[64px] border border-border rounded-2xl flex-row items-center px-6 relative"
+      disabled={disabled}
+      className={`h-[64px] border border-border rounded-2xl flex-row items-center px-6 relative ${
+        disabled ? "opacity-50" : ""
+      }`}
       style={({ pressed }) => ({
         backgroundColor: pressed ? "#f9fafb" : "white",
       })}
