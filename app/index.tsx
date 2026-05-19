@@ -1,11 +1,12 @@
 import { Pressable, Text, View } from "@/components/tw";
 import { useAuth, useClerk, useUser } from "@clerk/expo";
-import { Redirect } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 
 export default function Index() {
   const { isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
   const { signOut } = useClerk();
+  const router = useRouter();
 
   if (!isLoaded) return null;
 
@@ -21,8 +22,15 @@ export default function Index() {
       </Text>
       
       <Pressable 
+        onPress={() => router.push("/choose-language")}
+        className="mt-4 p-4 bg-lingua-purple rounded-xl w-full items-center"
+      >
+        <Text className="text-white font-poppins-semibold">Choose Language</Text>
+      </Pressable>
+
+      <Pressable 
         onPress={() => signOut()}
-        className="mt-8 p-4 bg-red-500 rounded-xl w-full items-center"
+        className="mt-4 p-4 bg-red-500 rounded-xl w-full items-center"
       >
         <Text className="text-white font-poppins-semibold">Sign Out</Text>
       </Pressable>
