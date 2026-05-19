@@ -2,6 +2,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "@/components/tw";
 import { Image } from "@/components/tw/image";
 import { images } from "@/constants/images";
 import { languages } from "@/data/languages";
+import { useLanguageStore } from "@/store/useLanguageStore";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -22,7 +23,8 @@ const getLearnerCount = (langId: string) => {
 
 export default function ChooseLanguage() {
   const router = useRouter();
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const { selectedLanguageId, setLanguage } = useLanguageStore();
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(selectedLanguageId);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredLanguages = languages.filter((lang) =>
@@ -107,7 +109,10 @@ export default function ChooseLanguage() {
           {/* Confirmation Button */}
           {selectedLanguage && (
             <Pressable
-              onPress={() => router.push("/")}
+              onPress={() => {
+                setLanguage(selectedLanguage);
+                router.replace("/");
+              }}
               className="mt-8 bg-lingua-purple p-4 rounded-2xl items-center shadow-soft"
             >
               <Text className="text-white font-poppins-semibold text-[16px]">Continue</Text>
