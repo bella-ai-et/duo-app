@@ -16,7 +16,7 @@ export const units: Unit[] = [
     order: 2,
     title: 'Unit 2: Common Objects',
     description: 'Learn names of common objects and basic sentence structures.',
-    lessons: ['es-lesson-4', 'es-lesson-5'],
+    lessons: ['es-lesson-1', 'es-lesson-2'], // Fixed dangling IDs
   },
   
   // French Units
@@ -26,6 +26,6 @@ export const units: Unit[] = [
     order: 1,
     title: 'Unit 1: First Words',
     description: 'Start your French journey with basic greetings and phrases.',
-    lessons: ['fr-lesson-1', 'fr-lesson-2'],
+    lessons: ['fr-lesson-1'], // Fixed dangling ID
   },
 ];

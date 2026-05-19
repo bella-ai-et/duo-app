@@ -5,6 +5,7 @@ import { languages } from "@/data/languages";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useState } from "react";
+import { StyleSheet } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 // Helper to get mock learner counts to match design style
@@ -42,8 +43,8 @@ export default function ChooseLanguage() {
         </View>
 
         <ScrollView 
-          className="flex-1" 
-          contentContainerClassName="px-4 pb-80"
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
           showsVerticalScrollIndicator={false}
         >
           {/* Search Bar */}
@@ -52,7 +53,7 @@ export default function ChooseLanguage() {
             <TextInput
               placeholder="Search languages"
               placeholderTextColor="#6b7280"
-              className="flex-1 ml-2 text-body-medium"
+              style={styles.textInput}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -69,9 +70,14 @@ export default function ChooseLanguage() {
                 <Pressable
                   key={lang.id}
                   onPress={() => setSelectedLanguage(lang.id)}
-                  className={`flex-row items-center p-4 rounded-2xl border-2 ${
-                    isSelected ? "border-lingua-purple bg-lingua-purple/5" : "border-gray-100"
-                  }`}
+                  style={({ pressed }) => [
+                    styles.languageCard,
+                    {
+                      borderColor: isSelected ? "#6c4ef5" : "#f3f4f6",
+                      backgroundColor: isSelected ? "rgba(108, 78, 245, 0.05)" : "transparent",
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
                 >
                   <View className="w-12 h-12 rounded-full overflow-hidden mr-4 bg-gray-100">
                     <Image
@@ -121,3 +127,27 @@ export default function ChooseLanguage() {
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 320,
+  },
+  textInput: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    fontFamily: "Poppins-Regular",
+    color: "#0d132b",
+  },
+  languageCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 2,
+  },
+});
