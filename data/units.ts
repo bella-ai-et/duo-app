@@ -26,6 +26,6 @@ export const units: Unit[] = [
     order: 1,
     title: 'Unit 1: First Words',
     description: 'Start your French journey with basic greetings and phrases.',
-    lessons: ['fr-lesson-1', 'fr-lesson-2'],
+    lessons: ['fr-lesson-1'], // Fixed dangling ID
   },
 ];

@@ -1,5 +1,7 @@
 export type LanguageCode = 'es' | 'fr' | 'it' | 'de' | 'ja' | 'ko' | 'zh';
 
+export type ImageSource = string | { uri: string } | number;
+
 export interface Language {
   id: string;
   code: LanguageCode;
@@ -13,7 +15,7 @@ export interface Vocabulary {
   translation: string;
   pronunciation?: string;
   example?: string;
-  image?: any;
+  image?: ImageSource;
 }
 
 export interface Phrase {
@@ -39,7 +41,7 @@ export interface Activity {
   correctAnswer: string;
   explanation?: string;
   audioUrl?: string;
-  imageUrl?: any;
+  imageUrl?: ImageSource;
 }
 
 export interface LessonGoal {

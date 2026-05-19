@@ -93,6 +93,38 @@ export const lessons: Lesson[] = [
     ],
   },
 
+  // Spanish Unit 2 Lessons
+  {
+    id: 'es-lesson-4',
+    unitId: 'es-unit-2',
+    title: 'Common Objects 1',
+    description: 'Learn names of everyday items.',
+    type: 'PRACTICE',
+    xpReward: 10,
+    goals: [{ id: 'g6', description: 'Identify common objects' }],
+    vocabulary: [
+      { id: 'v5', word: 'La mesa', translation: 'Table' },
+      { id: 'v6', word: 'La silla', translation: 'Chair' },
+    ],
+    phrases: [],
+    activities: [],
+  },
+  {
+    id: 'es-lesson-5',
+    unitId: 'es-unit-2',
+    title: 'Common Objects 2',
+    description: 'Learn more names of everyday items.',
+    type: 'PRACTICE',
+    xpReward: 10,
+    goals: [{ id: 'g7', description: 'Identify more common objects' }],
+    vocabulary: [
+      { id: 'v7', word: 'El libro', translation: 'Book' },
+      { id: 'v8', word: 'El bolígrafo', translation: 'Pen' },
+    ],
+    phrases: [],
+    activities: [],
+  },
+
   // French Lessons
   {
     id: 'fr-lesson-1',
