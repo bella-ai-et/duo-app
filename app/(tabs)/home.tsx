@@ -18,6 +18,17 @@ export default function HomeScreen() {
     return languages.find((l) => l.id === selectedLanguageId) || languages[0];
   }, [selectedLanguageId]);
 
+  const greeting = useMemo(() => {
+    const greetings: Record<string, string> = {
+      es: "Hola",
+      fr: "Bonjour",
+      it: "Ciao",
+      de: "Hallo",
+      ja: "Konnichiwa",
+    };
+    return greetings[selectedLanguage.code] || "Hello";
+  }, [selectedLanguage]);
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
       <View className="flex-1 bg-white">
@@ -32,7 +43,7 @@ export default function HomeScreen() {
               />
             </View>
             <Text className="text-h3 text-text-primary">
-              Hola, {user?.firstName || "Alex"}! 👋
+              {greeting}, {user?.firstName || "Alex"}! 👋
             </Text>
           </View>
 
@@ -48,8 +59,8 @@ export default function HomeScreen() {
         </View>
 
         <ScrollView 
-          className="flex-1"
-          contentContainerClassName="pb-10"
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
           {/* Daily Goal Card */}
@@ -94,8 +105,8 @@ export default function HomeScreen() {
           {/* Today's Plan Section */}
           <View className="px-6 mb-8">
             <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-h3 text-text-primary">Today's plan</Text>
-              <Pressable>
+              <Text className="text-h3 text-text-primary">Today{"'"}s plan</Text>
+              <Pressable onPress={() => {}}>
                 <Text className="text-lingua-purple font-poppins-bold text-[14px]">View all</Text>
               </Pressable>
             </View>

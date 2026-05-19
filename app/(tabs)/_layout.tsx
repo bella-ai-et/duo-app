@@ -67,7 +67,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         };
 
         const getIcon = (name: string, focused: boolean) => {
-          let iconName: any = "home";
+          let iconName: React.ComponentProps<typeof Ionicons>["name"] = "home";
           if (name === "home") iconName = focused ? "home" : "home-outline";
           else if (name === "learn") iconName = focused ? "book" : "book-outline";
           else if (name === "ai-teacher") iconName = focused ? "school" : "school-outline";
